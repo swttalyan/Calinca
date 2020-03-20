@@ -31,3 +31,4 @@ Example command to run the Step1: perl scripts/Read_Processing_Mapping/workflow_
 
 Example command to run the Step2:perl scripts/Assembly_and_Transcript_Quantification/submit_StringTieQuant_homoSapiens_ENS90.pl BAMFilesLocation.txt
 
+### Step3: ORF Prediction and Checkup
