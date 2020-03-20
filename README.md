@@ -14,7 +14,8 @@ samtools
 bowtie2
 STAR
 StringTie
-Cufflinks
+Samtools
+gffcomp
 
 ~~~~~~~~~~~~~
 
