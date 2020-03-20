@@ -26,7 +26,7 @@ Example command to run the Step1: perl scripts/Read_Processing_Mapping/workflow_
  /biodb/genomes/mus_musculus/GRCm38_90/star/
 
 
-### Step2: Transcript Assembly and Quantification
+### Step2: Assembly and Transcript Quantification
 
-Example command to run the Step1:
+Example command to run the Step2:perl scripts/Assembly_and_Transcript_Quantification/submit_StringTieQuant_homoSapiens_ENS90.pl BAMFilesLocation.txt
 
