@@ -85,9 +85,9 @@ for(my $t=0;$t<@file2;$t++)
 	$out=~s/raw_reads/rrna_free_reads/g;
     	my $tmp = $flexfiles[$t];
     	$tmp=~s/flexbar_1.fastq.gz/flexbar_2.fastq.gz/g;
-	#system("\t scripts/Read_Processing_Mapping/remove_rRNA_bowtie2_paired.sh ".$flexfiles[$t]." ".$tmp." ".$rRNA_mtRNA." ".$out." ".$out.".log\n");
-    	#system ("\tmv ".$out."no_rRNA.1 ".$out."_rRNAfree_1.fastq.gz\n");
-    	#system ("\tmv ".$out."no_rRNA.2 ".$out."_rRNAfree_2.fastq.gz\n\n");
+	system("\t scripts/Read_Processing_Mapping/remove_rRNA_bowtie2_paired.sh ".$flexfiles[$t]." ".$tmp." ".$rRNA_mtRNA." ".$out." ".$out.".log\n");
+    	system ("\tmv ".$out."no_rRNA.1 ".$out."_rRNAfree_1.fastq.gz\n");
+    	system ("\tmv ".$out."no_rRNA.2 ".$out."_rRNAfree_2.fastq.gz\n\n");
 }
 
 
@@ -102,7 +102,6 @@ for(my $t=0;$t<@file2;$t++)
 	my $out=$file2[$t];
 	$out=~s/raw_reads/mapping/g;
 	#$out=$out."_";
-	print "\t scripts/Read_Processing_Mapping/STARalliance_circles_DCC_singlePass.sh ".$out." ".$rrnafiles[$t]." ".$tmp." ".$index." ".$gtf."\n";
 	system ("\t \./scripts/Read_Processing_Mapping/STARalliance_circles_DCC_singlePass.sh ".$out." ".$rrnafiles[$t]." ".$tmp." ".$index." ".$gtf."\n"); 
 }
 
