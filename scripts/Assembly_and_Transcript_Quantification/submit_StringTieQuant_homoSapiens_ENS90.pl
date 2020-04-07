@@ -1,144 +1,115 @@
 #!/bin/perl
+use warnings;
+use strict;
+
+## > /dev/null 2>&1 for stringtie std output and also for cuffmerge
 #input prefix File
 use File::Basename;
 
 my $args=$#ARGV+1;
-if($args!=1)
+if($args!=5)
 {
-print "\tUsage of the script: perl submit_StringTieQuant_homoSapiens_ENS90.pl ListFilewithLocationofBAMfileinStarResults \n";
+print "\tUsage of the script: perl submit_StringTieQuant_homoSapiens_ENS90.pl ListofBAMFilesForTxAssembly ReferencegenomeGTFFile ReferencegenomeFastaFile librarytype ListofBAMFilesTxQuantification\n";
 exit;
 }
 
-my $index = "/biodb/genomes/mus_musculus/GRCm38_90/star";
-my $gtfFile = "/biodb/genomes/mus_musculus/GRCm38_90/GRCm38.90.gtf ";
-my $cuffcmp_gtfFile = "/biodb/genomes/mus_musculus/GRCm38_90/cuffcmp.GRCm38.90.gtf";
+## command to run the script for Step1
+# perl scripts/Assembly_and_Transcript_Quantification/submit_StringTieQuant_homoSapiens_ENS90.pl BAMFilesForTxAssembly.txt /biodb/genomes/mus_musculus/GRCm38_90/GRCm38.90.gtf /biodb/genomes/mus_musculus/GRCm38_90/GRCm38_90.fa fr-firststrand BAMFilesForTxQuantifications.txt
 
-my $mergedGTF = "merged_asm/merged.gtf";
-my $refGenome = "/biodb/genomes/mus_musculus/GRCm38_90/GRCm38_90.fa";
+##### parsing command line parameters
+my $inputFiles = shift @ARGV;
+my $gtfFile = shift @ARGV;
 
-my $library_type = "fr-firststrand";
+my $refGenome = shift @ARGV;
+my $library_type=shift @ARGV;
+my $bamFileForAbun=shift @ARGV;
+#chdir($wdir) || die "Could not change to wdir";
+system("mkdir -p Output");
+system("mkdir -p Output/TranscriptAssemblyAndabundanceEstimation");
+system("mkdir -p Output/TranscriptAssemblyAndabundanceEstimation/TranscriptAssembly");
+system("mkdir -p Output/TranscriptAssemblyAndabundanceEstimation/TranscriptAbundance");
+system ("mkdir -p Output/TranscriptAssemblyAndabundanceEstimation/SelectedCandidates");
+#my $cuffcmp_gtfFile = "/biodb/genomes/mus_musculus/GRCm38_90/cuffcmp.GRCm38.90.gtf";
 
-my @job_dependencies;
-my @bamfiles;
+my $mergedGTF = "Output/TranscriptAssemblyAndabundanceEstimation/merged_asm/merged.gtf";
+print "\nStep2a: Denovo transcripts assembly using the input bam file\n\n";
 
-while(<>)
-  {
+open(my $fh, '<:encoding(UTF-8)', $inputFiles)
+  or die "Could not open file '$inputFiles' $!";
+while(<$fh>)
+{
     chomp;
     #change input format: ./SID6724_S1_L004_STARmapping/Aligned.noS.bam
-my $prefix = $_;
-my $STAR_folder = dirname($prefix);
-my $bam_file = $STAR_folder."/Aligned.noS.bam";
-my $bam_pref = $STAR_folder."/Aligned.noS";
-   
-    if(-e $bam_file)
-      {
+	my $prefix = $_;
+	#print "prefix\t".$prefix."\n";
+	my $STAR_folder = "Output/TranscriptAssemblyAndabundanceEstimation/TranscriptAssembly/";
+	#print "STAR Folder\t".$STAR_folder."\n";
+	my $bam_file = $_;
+	my @Sample = split ("\/", $bam_file);
+	my $sampleName=$STAR_folder.$Sample[-2];
+	my $bam_pref = $STAR_folder."/Aligned.noS";
+	#print "BAM file prefix\t".$bam_pref."\n";
 
-#correct BAM file too
-#$command = "sbatch --time=03:00:00 -p blade,himem -J correct_".$prefix." /home/cdieterich/scripts/correctBAM.sh ".$bam_pref;
-#my $ret = `$command 2>&1`;
-#chomp $ret;
+	if(-e $bam_file)
+      	{
+	# Submit StringTie for denovo tx assembly
+	## Run me
+	#system ("\tscripts/Assembly_and_Transcript_Quantification/stringtie_cluster_Ballgown_refGuided.sh ".$bam_file." ".$gtfFile." ".$sampleName."_RefGuidedStringTieAssembly"." ".$library_type."\n");
+	print "\tscripts/Assembly_and_Transcript_Quantification/stringtie_cluster_Ballgown_refGuided.sh ".$bam_file." ".$gtfFile." ".$sampleName."_RefGuidedStringTieAssembly"." ".$library_type."\n";
+	}
 
-#$ret=~/(\d+)/;
-#my $jid = $1;
+}
+## Run me
+### Merging of transcript assembly
+print "\tStep2b: Merging of denovo and reference transcript assembly\n\n";
 
-#submit Ballgown
-$command = "sbatch --time=03:00:00 -J StringTie_".basename($prefix)." /home/cdieterich/scripts/stringtie_cluster_Ballgown.sh ".$bam_file." ".$gtfFile." ".$STAR_folder."_StringTieBallgown"." ".$library_type;
-print $command,"\n";
-$ret = `$command 2>&1`;
-chomp $ret;
+#system ("\tscripts/Assembly_and_Transcript_Quantification/cuffmerge_StringTieAssembly.sh ".$gtfFile." ".$refGenome."\n");
+print "\tscripts/Assembly_and_Transcript_Quantification/cuffmerge_StringTieAssembly.sh ".$gtfFile." ".$refGenome."\n";
 
-$command = "sbatch --time=03:00:00  -J StringTie2_".basename($prefix)." /home/cdieterich/scripts/scallop.sh ".$bam_file." ".$STAR_folder."_Scallop ".$library_type;
-print $command,"\n";
-$ret = `$command 2>&1`;
-chomp $ret;
+############# calculation of abundance of merged transcripts in input BAM files
+print "\nStep2c: Transcripts abundance calculation based on input BAM files\n\n";
 
-$ret=~/(\d+)/;
+open(my $fhh, '<:encoding(UTF-8)', $bamFileForAbun)
+  or die "Could not open file '$bamFileForAbun' $!";
+while(<$fhh>)
+{
+    chomp;
+        my $prefix = $_;
+        #print "prefix\t".$prefix."\n";
+        my $STAR_folder = "Output/TranscriptAssemblyAndabundanceEstimation/TranscriptAbundance/";
+        #print "STAR Folder\t".$STAR_folder."\n";
+        my $bam_file = $_;
+        my @Sample = split ("\/", $bam_file);
+        my $sampleName=$STAR_folder.$Sample[-2];
+        my $bam_pref = $STAR_folder."/Aligned.noS";
+        #print "BAM file prefix\t".$bam_pref."\n";
 
-push(@job_dependencies,$1);
-print $1,"\n";
-push(@bamfiles,$bam_file);
-      }
-  }
-my $JobDepString = join(":",@job_dependencies);
-$command = "sbatch --time=03:00:00  --dependency=afterok:".$JobDepString." -J cuffmerge /home/cdieterich/scripts/cuffmerge_scallop_cluster.sh ".$gtfFile." ".$refGenome;
-print $command,"\n";
-my $ret = `$command 2>&1`;
-chomp $ret;
-
-$ret=~/(\d+)/;
-$JobDepString = $1;
-print "Submit ".$JobDepString."\n";
-
-#start cuffquant & cuffdiff
-@job_dependencies=();
-
-
-foreach my $bam (@bamfiles)
-  {
-
-    my $outputFolder = $bam;
-    $outputFolder =~ s/\/Aligned.noS.bam//;
-    #$outputFolder = $outputFolder."_AllStringTieBallgown";
-    print $bam,"\n";
-    $command = "sbatch --dependency=afterok:".$JobDepString." -J StringTie_All2_".basename($bam)." /home/cdieterich/scripts/stringtie_cluster_Ballgown.sh ".$bam." merged_asm/merged.gtf ".$outputFolder."_All_StringTieBallgown";
-    print $command,"\n";
-    $ret = `$command 2>&1`;
-    chomp $ret;
-  }
-#exit(0);
+        if(-e $bam_file)
+        {
+        # Submit StringTie for denovo tx assembly
+        ## Run me
+        #system ("\tscripts/Assembly_and_Transcript_Quantification/stringtie_cluster_Ballgown.sh ".$bam_file." ".$mergedGTF." ".$sampleName."_StringTieQuantification"."\n");
+        print "\tscripts/Assembly_and_Transcript_Quantification/stringtie_cluster_Ballgown.sh ".$bam_file." ".$mergedGTF." ".$sampleName."_StringTieQuantification"."\n";
+        }
+}
 
 
-foreach my $bam (@bamfiles)
-  {
-    my $outputFolder = $bam;
-    $outputFolder =~ s/\/Aligned.noS.bam//;
-    $outputFolder = $outputFolder."_All";
-    $command = "sbatch --time=03:00:00 --dependency=afterok:".$JobDepString." -J cuffquant".basename($outputFolder)." /home/cdieterich/scripts/cuffquant_cluster_strand.sh ".$bam." ".$mergedGTF." ".$outputFolder." ".$library_type;
-    my $ret = `$command 2>&1`;
-    print $command,"\n";
-    print $outputFolder,"\n";
-    chomp $ret;
+#### Select number of candidates transcripts based on FPKM and length
+print "\n\nStep2d: Select transcripts based on expression and length\n\n";
 
-    $ret=~/(\d+)/;
-    push(@job_dependencies,$1);
-    print "cuffquant".$1."\n";
-  }
+my $quantFiles=`find Output/TranscriptAssemblyAndabundanceEstimation/TranscriptAbundance/ -iname stringtieB_outfile.gtf`;
 
-foreach my $bam (@bamfiles)
-  {
-    my $outputFolder = $bam;
-    $outputFolder =~ s/\/Aligned.noS.bam//;
-    $outputFolder = $outputFolder."_Ref";
-    $command = "sbatch --time=03:00:00  --dependency=afterok:".$JobDepString." -J cuffquant".basename($outputFolder)." /home/cdieterich/scripts/cuffquant_cluster_strand.sh ".$bam." ".$gtfFile." ".$outputFolder." ".$library_type;
-    my $ret = `$command 2>&1`;
-    print $command,"\n";
-    print $outputFolder,"\n";
-    chomp $ret;
+my @qFiles=split("\n",$quantFiles);
+system("> TCONSselected.txt");
+foreach my $line (@qFiles)
+{
+chomp $line;
+## Run me
+#`grep -w "transcript" $line | awk '{print \$12"\t"\$(NF-2)}' | sed 's/"//g' | sed 's/;//g'| awk '{if(\$2>=1) print \$1}' >>TCONSselected.txt`;
 
-    $ret=~/(\d+)/;
-    push(@job_dependencies,$1);
-    print "cuffquantRef".$1."\n";
-  }
+} 
 
-foreach my $bam (@bamfiles)
-  {
-    my $outputFolder = $bam;
-    $outputFolder =~ s/\/Aligned.noS.bam//;
-    $outputFolder = $outputFolder."_Refcmp";
-    $command = "sbatch --time=03:00:00  --dependency=afterok:".$JobDepString." -J cuffquant".basename($outputFolder)." /home/cdieterich/scripts/cuffquant_cluster_strand.sh ".$bam." ".$cuffcmp_gtfFile." ".$outputFolder." ".$library_type;
-    my $ret = `$command 2>&1`;
-    #print $command,"\n";
-    #print $outputFolder,"\n";
-    chomp $ret;
+system ("\tscripts/Assembly_and_Transcript_Quantification/selectedTCONS.sh ".$mergedGTF." ".$refGenome."\n");
 
-    $ret=~/(\d+)/;
-    push(@job_dependencies,$1);
-    print "cuffquantRefcmp".$1."\n";
-  }
 
-#do the cuffdiff now.
-
-#my $JobDepString = join(":",@job_dependencies);
-#$command = "sbatch --time=20:00:00 -p blade,himem --dependency=afterok:".$JobDepString." -J cuffmerge /home/cdieterich/scripts/cuffmerge_cluster.sh ".$gtfFile." ".$refGenome;
-#my $ret = `$command 2>&1`;
-#chomp $ret;
+print "\nStep2: Transcript assembly and abundance calculation is completed\n\n";
