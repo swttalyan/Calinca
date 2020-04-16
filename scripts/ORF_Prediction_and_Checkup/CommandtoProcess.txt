@@ -1,0 +1,17 @@
+module load cufflinks
+
+cut -f1 transcripts.fasta.transdecoder.bed | sort -u >withORF.txt
+
+awk '{print "transcript_id \""$1"\";"}' withORF.txt >tmp.txt
+
+grep -v -Fwf tmp.txt transcripts.gtf | awk '{print $12}' | sort -u >noORF.txt
+
+perl ../../../scripts/ORF_Prediction_and_Checkup/DyanmicORFSelection.pl transcripts.fasta.transdecoder.bed BelowCurve.txt
+
+cut -f1 BelowCurve.txt | sort -u >tmp.txt
+cat noORF.txt tmp.txt | sort -u | awk '{print "transcript_id \""$1"\";"}' >bothset.txt
+
+grep -Fwf bothset.txt transcripts.gtf >no50aaORFandBelowMECurve.gtf
+
+cuffcompare  -r ../../../data/GRCm38.90.longnoncodingRNAs.gtf no50aaORFandBelowMECurve.gtf
+cuffmerge -p 10 --ref-gtf ../../../data/GRCm38.90.longnoncodingRNAs.gtf --ref-sequence /biodb/genomes/mus_musculus/GRCm38_90/GRCm38_90.fa --min-isoform-fraction 0.2 todo.txt
