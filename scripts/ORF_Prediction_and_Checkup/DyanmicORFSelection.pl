@@ -41,34 +41,32 @@ foreach my $line (@bedrecords)
 	### ID=TCONS_00000001.p1;GENE.TCONS_00000001~~TCONS_00000001.p1;ORF_type:complete_len:275_(+),score=40.54,ENSP00000262193.6|95.021|8.32e-172
 
 	##### transcript id
-	#print F1 $TCONS."\t";
+	#print $TCONS."\n";
 	
 
 	######## ORF ID
 	my @ORF_ID=split ("\\;",$recordName);
 	$ORF_ID[0]=~tr/ID=//;
-	#print F1 $ORF_ID[0]."\t";
+	#print $ORF_ID[0]."\n";
 		
 	#### TCONS length
-	#print F1 $TCONSlen."\t";
+	#print $TCONSlen."\n";
 
 
 	######## TCONS ORF length
 	my @ORF_len=split("\\_len:",$recordName);
 	my @ORF_other=split("\\_\\(",$ORF_len[1]);
 	my $orf_length=$ORF_other[0]*3;
-	#print F1 $orf_length."\t";
+	#print  $orf_length."\n";
 
 
 		my $eqORFlen=180+91*log($TCONSlen)-330;
-		print F1 $eqORFlen."\t";
+		#print $eqORFlen."\n";
 		if($orf_length<=$eqORFlen)
 		{
-		print F1 $TCONS."\t".$ORF_ID[0]."\t". $TCONSlen."\t". $orf_length."\t","BelowCurve:noORF\n";	
+		print F1 $TCONS."\t".$ORF_ID[0]."\t". $TCONSlen."\t". $orf_length."\t".$eqORFlen."\tBelowCurve:noORF\n";	
 		}
 	}
 }
-
-
 close F1;
 

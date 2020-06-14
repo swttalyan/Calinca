@@ -2,11 +2,10 @@
 use strict;
 use warnings;
 
-
 my $num=$#ARGV+1;
 if($num !=6)
 {
-print "Usage of the Script: perl workflow_RNAseq_PE_MPIZ_musMusculus_ENS90.pl FilewithSamplesName FastQ1Extension FastQ2Extension rRNAcontaminationFile PathToRefGTF PathToStarIndexFile \n";
+print "Usage of the Script: perl workflow_RNAseq_PE_MPIZ_musMusculus_ENS90.pl FilewithSamplesName FastQ1Extension FastQ2Extension rRNAcontaminationFile ReferencegenomeGTFFile ReferencegenomeFastaFile \n";
 exit;
 }
 
@@ -69,6 +68,7 @@ for(my $t=0;$t<@file2;$t++)
 	my $out = $file2[$t];
  	$out =~ s/raw_reads/trimmed_reads/g;
 	#system("\t scripts/Read_Processing_Mapping/flexbar_paired_30.sh $file2[$t]"."$readSuffix $file2[$t]"."$readSuffix2 $out"."_flexbar\n\n");
+	#print "\t scripts/Read_Processing_Mapping/flexbar_paired_30.sh $file2[$t]"."$readSuffix $file2[$t]"."$readSuffix2 $out"."_flexbar\n\n";
 }
 print "\nDONE\n";
 
@@ -88,6 +88,10 @@ for(my $t=0;$t<@file2;$t++)
 	system("\t scripts/Read_Processing_Mapping/remove_rRNA_bowtie2_paired.sh ".$flexfiles[$t]." ".$tmp." ".$rRNA_mtRNA." ".$out." ".$out.".log\n");
     	system ("\tmv ".$out."no_rRNA.1 ".$out."_rRNAfree_1.fastq.gz\n");
     	system ("\tmv ".$out."no_rRNA.2 ".$out."_rRNAfree_2.fastq.gz\n\n");
+	#print "\t scripts/Read_Processing_Mapping/remove_rRNA_bowtie2_paired.sh ".$flexfiles[$t]." ".$tmp." ".$rRNA_mtRNA." ".$out." ".$out.".log\n";
+        #print "\tmv ".$out."no_rRNA.1 ".$out."_rRNAfree_1.fastq.gz\n";
+        #print "\tmv ".$out."no_rRNA.2 ".$out."_rRNAfree_2.fastq.gz\n\n";
+
 }
 
 
@@ -101,10 +105,10 @@ for(my $t=0;$t<@file2;$t++)
    	$tmp=~s/_1.fastq.gz/_2.fastq.gz/g;
 	my $out=$file2[$t];
 	$out=~s/raw_reads/mapping/g;
-	#$out=$out."_";
 	system ("\t \./scripts/Read_Processing_Mapping/STARalliance_circles_DCC_singlePass.sh ".$out." ".$rrnafiles[$t]." ".$tmp." ".$index." ".$gtf."\n"); 
+	#print "\t \./scripts/Read_Processing_Mapping/STARalliance_circles_DCC_singlePass.sh ".$out." ".$rrnafiles[$t]." ".$tmp." ".$index." ".$gtf."\n";
 }
 
 print "\nDONE\n";
 
-print "\nSTEP1: Processing and Mapping of Reads to reference genome finished\n\n";
+print "\n\nSTEP1: Processing and Mapping of Reads to reference genome finished\n\n";

@@ -1,136 +1,72 @@
 #!/usr/bin/perl
+use strict;
+use warnings;
+use File::Copy;
 
-#Necessary steps
-#4. Candidate selection: removing long- and short- ORFs, length and FPKM selection
-#cuffnorm_slurm.sh - optional
-#srun select_novel_candidates.sh
-#transdecoder.sh
-#srun split_gtf_LORF.sh
-#srun get_alignments.sh
-#RNAcode_array.sh
+my $args=$#ARGV+1;
+if($args!=7)
+{
+print "\tUsage of the script: perl workflow_lncRNA_discovery_KFO_musMusculus.pl transcriptGTFFile transcriptFastaFile ProteinsDB TransDecoderInstallationPath refGTFfile refGenomeFasta refRepeatMasker File\n\n";
+exit;
+}
 
-use File::Basename;
+## command to run the script for Step1
+# perl scripts/ORF_Prediction_and_Checkup/workflow_lncRNA_discovery_KFO_musMusculus.pl transcripts.gtf transcripts.fasta data/SwissProt/uniprot_sprot.fasta /biosw/transdecoder/5.5.0 /biodb/genomes/mus_musculus/GRCm38_90/GRCm38.90.gtf /biodb/genomes/mus_musculus/GRCm38_90/GRCm38_90.fa data/GRCm38_90_repeatmasker.bed
 
-my $wdir = shift @ARGV;
+my $transcriptGTF=shift @ARGV;
+my $transcriptfile = shift @ARGV;
+my $proteinDB=shift @ARGV;
+my $TDPATH=shift @ARGV;
+my $refGTF=shift @ARGV;
+my $refGenome=shift @ARGV;
+my $refRepeatMasker=shift @ARGV;
+#my @files;
 
-my @files;
-
-system("mkdir -p ".$wdir) unless (-d $wdir);
-chdir($wdir) || die "Could not change to wdir";
-
-#system("mkdir -p cuffnorm");
+system("mkdir -p Output/ORFPredictionAndCheckup/");
+system ("cp $transcriptfile Output/ORFPredictionAndCheckup/");
+system ("cp $transcriptGTF Output/ORFPredictionAndCheckup/");
+system ("cp $refRepeatMasker Output/ORFPredictionAndCheckup/repeats.bed");
+chdir("Output/ORFPredictionAndCheckup/") || die "Could not change to wdir";
 system("mkdir -p transdecoder");
-system("mkdir -p RNAcode");
+system("mv $transcriptfile transdecoder/transcripts.fasta");
+system ("mv $transcriptGTF transdecoder/transcripts.gtf");
+system ("mv repeats.bed transdecoder/repeats.bed");
+#Commands to run Transdecoder on input transcripts fasta file
+print "\n\nStep3a: Run TranscDecoder on input transcripts fasta file\n\n";
 
-my $mergedGTF = "/prj/Roman_Mueller/KFO/Public_SRA/workflow_PE_WP1/mapping/merged_asm/merged.gtf";
-my $refGenomeFasta = "/biodb/genomes/mus_musculus/GRCm38_90/GRCm38_90.fa";
-my $refGTF = "/biodb/genomes/mus_musculus/GRCm38_90/GRCm38.90.gtf";
-
-#software path
-my $TDPATH = "/biosw/transdecoder/2.0.1"; #replace via module system
-
-open(OUT,">Makefile");
-print OUT "SHELL := /bin/bash\n\n";
-print OUT "all: SELECT TRANSDECODER RNA_CODE\n\n";
-#RNACODE
-
-print OUT "SELECT:candidateIDs.gtf transdecoder/transcripts.gff3 transdecoder/transcripts.fasta\n\n";
-
-print OUT "TRANSDECODER: transdecoder/transcripts.fasta transdecoder/transcripts.fasta.transdecoder_dir/longest_orfs.cds transdecoder/transcripts.fasta.transdecoder.genome.gff3\n\n";
-
-#my @tmp = map {"RNAcode/RNAcode_".$_."_noORF.gtf"} keys %seqID;
-
-print OUT "RNA_CODE: RNAcode/noORF.gtf "."\n\n";
-
-print OUT "candidateIDs.gtf : candidates.txt $mergedGTF \n";
-print OUT "\tsrun --time=1:00:00 -n1 -N1 -c1 perl /home/cdieterich/scripts/select_from_GTF.pl candidates.txt $mergedGTF > candidateIDs.gtf\n";
-
-#candidate selection done and found under cuffnorm/candidateIDs.gtf
-
-open(TD,">transdecoder/select_candidates.sh") || die "Could not generate R script";
-print TD "#!/bin/bash\n";
-print TD "module unload transdecoder\n";
-print TD "module load transdecoder/2.0.1 \n";
-print TD $TDPATH."/util/cufflinks_gtf_to_alignment_gff3.pl candidateIDs.gtf > transdecoder/transcripts.gff3\n";
-close(TD);
-
-system("chmod 755 transdecoder/select_candidates.sh");
-
-print OUT "transdecoder/transcripts.gff3 : candidateIDs.gtf\n";
-print OUT "\tsrun --time=1:00:00 -n1 -N1 -c1 transdecoder/select_candidates.sh\n\n";
-
-open(TD,">transdecoder/make_fasta.sh") || die "Could not generate R script";
-print TD "#!/bin/bash\n";
-print TD $TDPATH."/util/cufflinks_gtf_genome_to_cdna_fasta.pl candidateIDs.gtf ".$refGenomeFasta." > transdecoder/transcripts.fasta\n";
-close(TD);
-
-system("chmod 755 transdecoder/make_fasta.sh");
-
-print OUT "transdecoder/transcripts.fasta : candidateIDs.gtf\n";
-print OUT "\tsrun --time=1:00:00 --mem=20g -n1 -N1 -c1 transdecoder/make_fasta.sh\n\n";
-
-open(TD,">transdecoder/longOrfs.sh") || die "Could not generate R script";
+#### create file for running transdecoder commands
+open(TD,">transdecoder/transdecoderScript.sh") || die "Could not generate bash script";
 print TD "#!/bin/bash\n";
 print TD "cd transdecoder\n";
-print TD $TDPATH."/TransDecoder.LongOrfs -m 60 -t transcripts.fasta\n";
+########## predicted ORF
+print TD $TDPATH."/TransDecoder.LongOrfs -m 50 -t transcripts.fasta\n";
+######## run blast command based on longORF
+print TD "makeblastdb -in $proteinDB -dbtype prot\n";
+print TD "#blastp -query transcripts.fasta.transdecoder_dir/longest_orfs.pep -db $proteinDB -max_target_seqs 1 -outfmt 6 -evalue 1e-5 -num_threads 10 >blastoutput.outfmt6\n";
+print TD $TDPATH."/TransDecoder.Predict -t transcripts.fasta --retain_blastp_hits blastoutput.outfmt6\n";
+print TD "cut -f1 transcripts.fasta.transdecoder.bed |sort -u > orf_transdecoder_ids.txt\n";
+print TD "sort -k4,4 -V transcripts.fasta.transdecoder.bed | sort -k1,1 -u >transdecoder.singlebesthit.bed\n";
 close(TD);
 
-system("chmod 755 transdecoder/longOrfs.sh");
+system ("chmod u+x transdecoder/transdecoderScript.sh");
+system ("/bin/bash transdecoder/transdecoderScript.sh") == 0 or die "Bash Script failed";
+my $no50aaORF=`perl ../../scripts/ORF_Prediction_and_Checkup/disselect_from_GTF.pl transdecoder/orf_transdecoder_ids.txt transdecoder/transcripts.gtf`;
+open (NO,">transdecoder/no50aaORF.gtf") || die "Could not create file";
+print NO $no50aaORF."\n";
+close (NO);
 
-print OUT "transdecoder/transcripts.fasta.transdecoder_dir/longest_orfs.cds : transdecoder/transcripts.fasta\n";
-print OUT "\tsrun --time=1:00:00 -n1 -N1 -c1 --mem=8g transdecoder/longOrfs.sh\n\n";
-
-open(TD,">transdecoder/predictOrfs.sh") || die "Could not generate R script";
-print TD "#!/bin/bash\n";
-print TD "cd transdecoder\n";
-print TD $TDPATH."/TransDecoder.Predict -t transcripts.fasta\n";
-close(TD);
-
-system("chmod 755 transdecoder/predictOrfs.sh");
-
-print OUT "transdecoder/transcripts.fasta.transdecoder.mRNA : transdecoder/transcripts.fasta.transdecoder_dir/longest_orfs.cds\n";
-print OUT "\tsrun --time=1:00:00 -n1 -N1 -c1 transdecoder/predictOrfs.sh\n\n";
-
-#${TDPATH}/util/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta > transcripts.fasta.transdecoder.genome.gff3
+system ("perl ../../scripts/ORF_Prediction_and_Checkup/DyanmicORFSelection.pl transdecoder/transcripts.fasta.transdecoder.bed transdecoder/BelowCurve.txt");
+#my $BelowCurve=`perl ../../scripts/ORF_Prediction_and_Checkup/disselect_from_GTF.pl transdecoder/BelowCurve.txt transdecoder/transcripts.gtf`;
+#open (BC,">transdecoder/BelowCurve.gtf") || die "Could not create file";
+#print BC $BelowCurve."\n";
+#close (BC);
 
 
-open(TD,">transdecoder/coordinates.sh") || die "Could not generate R script";
-print TD "#!/bin/bash\n";
-print TD "cd transdecoder\n";
-print TD $TDPATH."/util/cdna_alignment_orf_to_genome_orf.pl transcripts.fasta.transdecoder.gff3 transcripts.gff3 transcripts.fasta > transcripts.fasta.transdecoder.genome.gff3\n";
-close(TD);
+print "\n\nStep3b: Selection of final candidates based on ORF cutoff\n\n";
+system ("mkdir -p FinalLncRNACandidates");
 
-system("chmod 755 transdecoder/coordinates.sh");
-
-print OUT "transdecoder/transcripts.fasta.transdecoder.genome.gff3 : transdecoder/transcripts.fasta.transdecoder.mRNA\n";
-print OUT "\tsrun --time=1:00:00 -n1 -N1 -c1 --mem=8g  transdecoder/coordinates.sh\n\n";
-#close(OUT);
-
-open(TD,">RNAcode/select_noORF.sh") || die "Could not generate shell script";
-print TD "#!/bin/bash\n";
-print TD "cd RNAcode\n";
-print TD "cut -f 1 ../transdecoder/transcripts.fasta.transdecoder.bed |sort -u > orf_transdecoder_ids.txt\n";
-print TD "/home/cdieterich/scripts/disselect_from_GTF.pl orf_transdecoder_ids.txt ../candidateIDs.gtf > noORF.gtf\n";
-print TD $TDPATH."/util/cufflinks_gtf_genome_to_cdna_fasta.pl noORF.gtf ".$refGenomeFasta." > noORF.fasta\n";
-print TD "/home/cdieterich/scripts/chunks_from_GTF.pl noORF.gtf 100\n";
-close(TD);
-
-system("chmod 755 RNAcode/select_noORF.sh");
-
-print OUT "RNAcode/noORF.gtf : transdecoder/transcripts.fasta.transdecoder.genome.gff3\n";
-print OUT "\tsrun --time=1:00:00 -n1 -N1 -c1 --mem=8g  RNAcode/select_noORF.sh\n\n";
-
-#bla - transcripts.fasta.transdecoder.bed
-#check for ORFs
-#select_from_GTF.pl
-#contrast with candidateIDs.gtf
-#split of noORF
-
-close(OUT);
+system ("cp ../../scripts/ORF_Prediction_and_Checkup/SelectionOfCandidates.sh FinalLncRNACandidates");
+system ( "/bin/bash FinalLncRNACandidates/SelectionOfCandidates.sh $refGTF $refGenome"); 
 
 
-
-#close(OUT);
-
-#replace with new HAL based approach
-#array job etc.
+print "\n\nStep3: ORF prediction and check up is finished\n\n";

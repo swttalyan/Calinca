@@ -12,7 +12,7 @@ export LAB="merged_asm";
 module load cufflinks
 module load gffread
 
-find .. -iname "stringtieB_outfile.gtf" > todo_cuffmerge.txt
+find Output/TranscriptAssemblyAndabundanceEstimation/TranscriptAssembly -iname "stringtieB_outfile.gtf" > todo_cuffmerge.txt
 
 cuffmerge -p 10 --ref-gtf ${GTF} --ref-sequence ${SEQ} --min-isoform-fraction 0.2 todo_cuffmerge.txt
 

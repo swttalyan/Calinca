@@ -20,6 +20,3 @@ next unless /transcript\_id\s+\"(TCONS\_\d+)/;
 print unless ($h_id{$1});
   }
 close(GTF);
-
-
-
