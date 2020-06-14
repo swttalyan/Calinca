@@ -51,6 +51,7 @@ Example command to run Step3: perl scripts/ORF_Prediction_and_Checkup/workflow_l
 
 ### Step 4: Sequence and gene order conservation
 
+Example command to run Step4: perl scripts/Sequence_And_Synteny_Conservation/Sequence_And_Synteny_Conservation_Workflow.pl merged.gtf merged.fasta /biodb/genomes/mus_musculus/GRCm38_90/GRCm38.90.gtf /biodb/genomes/mus_musculus/GRCm38_90/GRCm38_90.fa /biodb/genomes/homo_sapiens/GRCh38_90/GRCh38.90.gtf /biodb/genomes/homo_sapiens/GRCh38_90/GRCh38_90.fa 
 
 ### Step 5: Differential gene expression of FSGS mouse data
 ------------------------------------------------
