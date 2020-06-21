@@ -49,7 +49,7 @@ awk '{print $1"\t"$2"\t"$12}' blastoutputHumanToMouse.outfmt6 | sed 's/|/\t/g' |
 
 ######## merge both way blast alignments
 
-#### create cyntenatore file
+#### create cyntenator file
 
 echo "Step4b: processing files for cyntenator"
 echo "#genome" >mouse_pc_inputfile.txt
