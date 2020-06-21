@@ -1,0 +1,12 @@
+K002000061_49346	../Glomes/K002000061_49346_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49347        ../Glomes/K002000061_49347_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49348        ../Glomes/K002000061_49348_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49349        ../Glomes/K002000061_49349_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49350        ../Glomes/K002000061_49350_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49351        ../Glomes/K002000061_49351_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49359        ../Glomes/K002000061_49359_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49360        ../Glomes/K002000061_49360_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49361        ../Glomes/K002000061_49361_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49362        ../Glomes/K002000061_49362_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49363        ../Glomes/K002000061_49363_All_StringTieBallgown/stringtieB_outfile.gtf
+K002000061_49364        ../Glomes/K002000061_49364_All_StringTieBallgown/stringtieB_outfile.gtf
