@@ -61,6 +61,7 @@ Example command to run Step4: perl scripts/Sequence_And_Synteny_Conservation/Seq
 
 Example Command to run Tissue Specificity Script:  Rscript scripts/Enrichment_In_Tissue/TSIbyTaufunctiontmp.R pod_glom_kidney_allGenesFPKM.txt
 
+python prepDE.py -i sample_lst.txt
 NOTE:: prepDE.py script from StringTie is use to calculate gene and transcript count.
 
 Differential gene expression is calculated using DESeq2 
