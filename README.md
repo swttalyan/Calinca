@@ -31,30 +31,36 @@ The basic workflow involves the following steps:
 * Read processing and mapping
 * Transcript assembly and abundance estimation
 * ORF prediction, check and selection of lncRNA candidates
-* conservation and expression in human
 * Exon-intron / gene order conservation with CYNTENATOR
+* Differential regulation of Genes and their Tissue specificty index calculation
 
 
 ### Step 1: Read Processing and Mapping
-
+------------------------------------------------
 Example command to run Step1: perl scripts/Read_Processing_Mapping/workflow_RNAseq_PE_MPIZ_musMusculus_ENS90.pl samplefile.txt _1.fastq.gz _2.fastq.gz /prj/KFO329/index/contaminants  /biodb/genomes/mus_musculus/GRCm38_90/GRCm38.90.gtf
  /biodb/genomes/mus_musculus/GRCm38_90/star/
 
 
 ### Step 2: Assembly and Transcript Quantification
-
+------------------------------------------------
 Example command to run Step2:perl scripts/Assembly_and_Transcript_Quantification/submit_StringTieQuant_homoSapiens_ENS90.pl BAMFilesForTxAssembly.txt /biodb/genomes/mus_musculus/GRCm38_90/GRCm38.90.gtf /biodb/genomes/mus_musculus/GRCm38_90/GRCm38_90.fa fr-firststrand BAMFilesForTxQuantifications.txt
 
-### Step 3: ORF Prediction and Checkup
 
+### Step 3: ORF Prediction and Checkup
+------------------------------------------------
 Example command to run Step3: perl scripts/ORF_Prediction_and_Checkup/workflow_lncRNA_discovery_KFO_musMusculus.pl SelectedCandidates.gtf  /biodb/genomes/mus_musculus/GRCm38_90/GRCm38_90.fa
 
-### Step 4: Sequence and gene order conservation
 
+### Step 4: Sequence and gene order conservation
+------------------------------------------------
 Example command to run Step4: perl scripts/Sequence_And_Synteny_Conservation/Sequence_And_Synteny_Conservation_Workflow.pl merged.gtf merged.fasta /biodb/genomes/mus_musculus/GRCm38_90/GRCm38.90.gtf /biodb/genomes/mus_musculus/GRCm38_90/GRCm38_90.fa /biodb/genomes/homo_sapiens/GRCh38_90/GRCh38.90.gtf /biodb/genomes/homo_sapiens/GRCh38_90/GRCh38_90.fa 
 
-### Step 5: Differential gene expression of FSGS mouse data
+
+### Step 5: Differential gene expression and Tissue Specificty
 ------------------------------------------------
+
+Example Command to run Tissue Specificity Script:  Rscript scripts/Enrichment_In_Tissue/TSIbyTaufunctiontmp.R pod_glom_kidney_allGenesFPKM.txt
+
 prepDE.py script from StringTie is use to calculate gene and transcript count.
 Differential gene expression is calculated using DESeq2 
 edgeR.R 
