@@ -61,9 +61,15 @@ Example command to run Step4: perl scripts/Sequence_And_Synteny_Conservation/Seq
 
 Example Command to run Tissue Specificity Script:  Rscript scripts/Enrichment_In_Tissue/TSIbyTaufunctiontmp.R pod_glom_kidney_allGenesFPKM.txt
 
-prepDE.py script from StringTie is use to calculate gene and transcript count.
+NOTE:: prepDE.py script from StringTie is use to calculate gene and transcript count.
+
 Differential gene expression is calculated using DESeq2 
-edgeR.R 
-Further the differential expressed genes are selected based on the following cutoff:
+
+for Single condition: Rscript edgeRScript.R gene_count_matrix_TS1.csv Contrast.txt
+For multi conditions: Rscript edgeRforMultiplesConditionAnalysisScript.R gene_count_matrix_Combined.csv ContrastMultipleConditions.txt  
+
+For this step the examples file used as input for the scripts are also provided in the folder for running.
+
+NOTE:: Differential expressed genes are selected based on the following cutoff:
 Padj<0.05
 log2Foldchange>0.58
